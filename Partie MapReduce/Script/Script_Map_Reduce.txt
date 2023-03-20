@@ -1,0 +1,51 @@
+# Le fichier CO2.csv se trouve dans le répertoire suivant : /vagrant/Groupe_TPT_6
+
+export MYDATAHOME=/vagrant/Groupe_TPT_6
+export MYPROJECTHOME=/vagrant/Projet_Big_Data
+ 
+cd $MYPROJECTHOME/MapReduce
+ 
+# Compiler le code
+javac CO2* -cp $(hadoop classpath)
+
+# Construire la hierarchie du .jar et y déplacer le code compilé
+
+ mkdir -p org/co2
+ mv CO2*.class org/co2/
+
+# Générer le .jar
+
+ jar -cvf CO2.jar -C . org
+
+# Dépalcer le fichier CO2.csv sur HDFS si cela n'a pas déjà était fait dans la partie précedente
+
+hadoop fs -mkdir /Datalake_CO2
+
+# supprimer le fichier si besoin
+hadoop fs -rm /Datalake_CO2/CO2.csv
+
+hadoop fs -put $MYDATAHOME/CO2.csv /Datalake_CO2
+
+# Vérifiez la présence du fichier sur HDFS:
+
+hadoop fs -ls /Datalake_CO2
+
+# Exécutez le programme
+
+# Suppression des fichier de résultat si besoin
+hadoop fs -rm /CO2/results/*
+hadoop fs -rmdir /CO2/results
+
+hadoop jar CO2.jar org.co2.CO2 /Datalake_CO2/CO2.csv /CO2/results
+
+# Consulter les résultats
+
+hadoop fs -ls /CO2/results
+hadoop fs -cat /CO2/results/part-r-00000
+
+
+# Export du fichier de résultats depuis hdfs
+
+hadoop fs -get /CO2/results/part-r-00000 $MYPROJECTHOME/MapReduce/co2_result.csv
+
+hadoop fs -get /CO2/results/part-r-00000 $MYDATAHOME/co2_result.csv
